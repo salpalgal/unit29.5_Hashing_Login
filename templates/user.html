@@ -4,13 +4,32 @@
 
 {% block content %}
 <section>
+    <h1>User</h1>
     <p>{{user.username}}</p>
     <p>{{user.email}}</p>
     <p>{{user.first_name}} {{user.last_name}}</p>
+    <h2>Feedbacks</h2>
+    {% for feed in user.feedback %}
+    <p>title : {{feed.title}}</p>
+    <p>content : {{feed.content}}</p>
+    <form action="/feedback/{{feed.id}}/update">
+        <button>Update</button>
+    </form>
+    <form action="/feedback/{{feed.id}}/delete" method = "POST">
+        <button>Delete</button>
+    </form>
+    {% endfor %}
+    
     
 </section>
 
 <form action="/logout">
     <button>Logout</button>
+</form>
+<form action="/user/{{user.username}}/delete" method= "POST">
+    <button>Delete User</button>
+</form>
+<form action="/user/{{user.username}}/feedback/add">
+    <button>Add Feedback</button>
 </form>
 {% endblock %}

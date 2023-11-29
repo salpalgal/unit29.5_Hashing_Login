@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, jsonify, session, flash
-from models import User, db, connect_db
-from forms import CreateUserForm, LoginForm
+from models import User, Feedback, db, connect_db
+from forms import CreateUserForm, LoginForm, FeedbackForm
 
 app = Flask(__name__)
 
@@ -58,8 +58,69 @@ def userPage(username):
     else:
         return render_template("user.html", user= user)
 
+
+@app.route("/user/<username>/delete", methods = ["POST"])
+def delete_user(username):
+    if "username" not in session:
+        flash("you must log in")
+        return redirect("/login")
+    else:
+        user = User.query.filter(User.username == username). first()
+        db.session.delete(user)
+        db.session.commit()
+        return redirect("/")
+
+
+@app.route("/user/<username>/feedback/add", methods = ["GET","POST"])
+def add_feedback(username):
+    form = FeedbackForm()
+    user = User.query.filter(User.username== username).first()
+    if "username" not in session:
+        flash("you must log in")
+        return redirect("/login")
+    if form.validate_on_submit():
+        title = form.title.data
+        content = form.content.data
+        feed = Feedback(title= title, content= content, username = username)
+        db.session.add(feed)
+        db.session.commit()
+        return redirect(f"/user/{username}")
+    else:
+        return render_template("feedback.html", form= form, user= user)
+
+
+@app.route("/feedback/<int:feedback_id>/update", methods = ["GET", "POST"])
+def edit_feedback(feedback_id):
+    form = FeedbackForm()
+    feed = Feedback.query.get_or_404(feedback_id)
+    if "username" not in session:
+        flash("you must log in")
+        return redirect("/login")
+    if form.validate_on_submit():
+        username = feed.user.username
+        feed.title = form.title.data
+        feed.content= form.content.data
+        db.session.add(feed)
+        db.session.commit()
+        return redirect(f"/user/{username}")
+    else:
+        return render_template("edit.html", form = form, feed = feed)
+
+@app.route("/feedback/<int:feedback_id>/delete", methods = ["POST"])
+def delete_feedback(feedback_id):
+    if "username" not in session:
+        flash("you must log in")
+        return redirect("/login")
+    else:
+        feed = Feedback.query.get_or_404(feedback_id)
+        username= feed.user.username
+        db.session.delete(feed)
+        db.session.commit()
+        return redirect(f"/user/{username}")
+
 @app.route("/logout")
 def logout():
     session.pop("username")
     return redirect("/")
+
 
